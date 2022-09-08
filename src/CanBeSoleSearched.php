@@ -14,8 +14,6 @@ trait CanBeSoleSearched
 
     public static function findSole(mixed $value) : Model
     {
-        self::$queryModel = static::class;
-
         $valueObject = new ValueObject($value);
 
         $cache = self::getCacheHelper($valueObject);
