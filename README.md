@@ -80,11 +80,14 @@ class CountryFinder
 
 The next step is to implement the `find(mixed $value)` method. The way you implement the `find(mixed $value)` is fairly standardized, but has been left to
 the user so that any customization or tweaking can be done here. A fairly standard implementation - with inline comments for added clarification - will
-look something like this. Note that I've updated the return type from `Model` to `Country`. This is allowed since `Country` extends `Model`, making this a 
-more specific version of the stub method definition:
+look something like this. Note that I've included a PHP DocBlock to assist my IDE, as PHP (still) does not allow generics, but I want my IDE to understand 
+that the return, while technically a `Model` is *actually* an instance of `Country`.
 
 ```php
-public static function find(mixed $value) : Country
+/**
+ * @return Model<Country>
+ */
+public static function find(mixed $value) : Model
 {
     // First, we 'clean' the value by removing any trailing or leading spaces, squishing extra spaces down to
     // single spaces, casting the result to string, etc.

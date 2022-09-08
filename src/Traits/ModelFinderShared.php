@@ -15,6 +15,10 @@ use Illuminate\Support\Str;
 
 trait ModelFinderShared
 {
+    protected static array $queryKeys = [];
+
+    protected static Model|string $queryModel = '';
+
     /**
      * Clear all cached searches for the connected Model.
      */
