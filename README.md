@@ -175,6 +175,7 @@ Here are a number of features/functionality that I want to implement in this pac
   *entire* cache for any given model just because one row has been added or removed. This will have to be explored.
 - Explore compatibility with Laravel `v8.x` - am I doing anything in this package that is exclusive to `v9.x`, or can I add support for `v8.x` without
   rewriting anything?
+- Write tests that make sense for this package.
 - Test this package with other database providers and "pseudo-databases" like `Sushi` to ensure it works as intended.
 
 ## Copyright, License and Permissions
