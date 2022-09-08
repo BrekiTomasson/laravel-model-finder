@@ -3,10 +3,13 @@
 A simple trait that makes building your own custom Laravel Model Searches a lot easier and safer. It ensures that your search criteria match one, and only
 one, result in the table being searched, allowing you to comfortably type-hint your methods by ensuring that the result of a query will never be `null` or a
 `Collection`, but always an instance of the specific Model you're querying. It does this by searching for a row that **uniquely** contains the data you're 
-looking for. 
+looking for.
+
+Since this package requires PHP `v8.0` or greater, I am taking advantage of the way modern PHP allows me to be strict with types, meaning every method in 
+this package has clearly defined types for the attributes it accepts and the types of data that it returns.
 
 > See `CHANGELOG.md` for more information about version compatibility in case you are running an older version of PHP and/or Laravel.
-> > The most recently released version (`v1.0.0`) of this package is built for PHP `v8.0` or greater and Laravel `v9.0` or greater.
+> The most recently released version (`v1.0.0`) of this package is built for PHP `v8.0` or greater and Laravel `v9.0` or greater.
 
 ## Installation
 
@@ -23,25 +26,16 @@ There are two main ways to use this package; either by (1) building your own Fin
 it allows for a cleaner separation of concerns and is more feature-complete, but I will describe both ways below and allow you to decide for yourself. For 
 both examples, I will be showing the functionality by using a hypothetical `Country` model, but the system works for absolutely any Laravel-powered model.
 
-For the sake of argument, assume the `Country` model contains the following attributes:
-
-- `int $id The database ID of the country.`
-- `string $name The official name of the country.`
-- `string $short_name A shortened or every-day version of the country's name.`
-- `int $numeric The numeric code assigned to this country.`
-- `string $alpha2 The two-letter ISO-3166 code for the country.`
-- `string $alpha3 The three-letter ISO-3166 code for the country.`
-
-An example of an entry from the `Country` model might therefore look like this:
+For the sake of argument, assume an entry in the `Country` model looks like this:
 
 ```json
 {
   "id": 213,
-  "name": "The Republic of Korea",
-  "short_name": "South Korea",
-  "numeric": 410,
   "alpha2": "KR",
-  "alpha3": "KOR"
+  "alpha3": "KOR",
+  "name": "The Republic of Korea",
+  "numeric": 410,
+  "short_name": "South Korea"
 }
 ```
 
@@ -52,9 +46,12 @@ Let's create a new `CountryFinder` in the `App\Tools` namespace. It doesn't need
 implemented, so let's do that.
 
 Now, since PHP doesn't natively support abstract keywords in their Traits (Seriously, PHP; what's up with that?), we have to implement the next two things
-manually. They are the `protected static array $queryKeys` and the `protected static Model|string $queryModel`. You populate these with (`$queryKeys`) the
-list of attributes to be searched and (`$queryModel`) the FQN (including `::class`) of the Model being searched. At this point, the file should look
-something like this:
+manually. They are the `protected static array $queryKeys` and the `protected static Model|string $queryModel`. You populate these with:
+
+- `$queryKeys`: An array containing the list of attributes to be searched, and
+- `$queryModel`: the FQN (including `::class`) of the Model being searched.
+ 
+At this point, the file should look something like this:
 
 ```php
 <?php
@@ -70,9 +67,9 @@ class CountryFinder
 {
     use CanFindModelEntries;
     
-    public static array $query_keys = ['name', 'short_name', 'alpha2', 'alpha3'];
+    public static array $queryKeys = ['name', 'short_name', 'alpha2', 'alpha3'];
 
-    protected static Model|string $query_model = \App\Models\World\Country::class;
+    protected static Model|string $queryModel = \App\Models\World\Country::class;
 
     public static function find(mixed $value) : Model
     {
@@ -91,13 +88,13 @@ public static function find(mixed $value) : Country
 {
     // First, we 'clean' the value by removing any trailing or leading spaces, squishing extra spaces down to
     // single spaces, casting the result to string, etc.
-    $valueObject = new ValueObject($value);
+    $value_object = new ValueObject($value);
     
     // Then, we generate the Cache Helper using the Value Object we've just generated. This will allow us to query
     // the cache for the search criteria you've entered. Under the hood, the CacheHelper uses the name of the model
-    // we defined in `$query_model` to generate the cache tags, allowing us to avoid conflicts when searching for
+    // we defined in `$queryModel` to generate the cache tags, allowing us to avoid conflicts when searching for
     // the same value in multiple models.
-    $cache = self::getCacheHelper($valueObject);
+    $cache = self::getCacheHelper($value_object);
 
     // If we've already got the results for this search in our cache, we can return it as is. Since the ValueObject that
     // the CacheHelper was constructed using is case-insensitive, this means that a search for "America" will return a
@@ -109,7 +106,7 @@ public static function find(mixed $value) : Country
     // Perform the search and store the result in $result. This will throw a ModelNotFoundException if no result is
     // found or a MultipleRecordsFoundException if two or more results are found. If no exception is thrown, we can be
     // certain that $result contains a single entry from your Model.
-    $result = self::searchInModel($valueObject);
+    $result = self::searchInModel($value_object);
 
     // Return the $result, ensuring we also store it in the cache for future use.
     return $cache->put($result);
@@ -117,7 +114,7 @@ public static function find(mixed $value) : Country
 ```
 
 Once you've implemented the `find` method with the relevant contents, you should be able to `CountryFinder::find('sweden')`, and it will return an entry from 
-your `Country` Model where the string  `'sweden'` is found in one of the four columns you named in the `$query_keys` array. You can also call methods or 
+your `Country` Model where the string  `'sweden'` is found in one of the four columns you named in the `$queryKeys` array. You can also call methods or 
 reference attributes directly from the returned object. Getting the official name of Iceland, for example, would be as easy as calling something like 
 `CountryFinder::find('is')->name`, as `'is'` is a unique identifier for the `alpha2` property.
 
@@ -127,10 +124,10 @@ Please read through Method 1 first to understand a little more about how this pa
 implementation better.
 
 This way of implementing the package does not require you to create an entirely new class. Instead, all you need to do is `use CanBeSoleSearched` inside of the 
-`Model` you wish to be searchable and define the required attribute, `public static array $query_keys`. In this case, you do not need to define the 
-attribute `$query_model`, as this will be inherently defined based on the Model that you're using the `CanBeSoleSearched` trait in.
+`Model` you wish to be searchable and define the required attribute, `public static array $queryKeys`. In this case, you do not need to define the 
+attribute `$queryModel`, as this will be inherently defined based on the Model that you're using the `CanBeSoleSearched` trait in.
 
-After that is done, you should be able to call `Country::findSole('taiwan')`, for example, and it will scan the columns defined in `$query_keys` and return 
+After that is done, you should be able to call `Country::findSole('taiwan')`, for example, and it will scan the columns defined in `$queryKeys` and return 
 a single result, if available. You can, of course, define your own `findSole` method that overwrites the one defined in the trait, but this is usually not 
 necessary.
 

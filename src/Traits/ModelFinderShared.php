@@ -16,19 +16,19 @@ use Illuminate\Support\Str;
 trait ModelFinderShared
 {
     /** @var array A list of the columns to base your search on. Should be set by the user. */
-    protected static array $query_keys;
+    protected static array $queryKeys;
 
     /**
      * @var Model|string The fully qualified class name, including "::class", of the Model being searched. Should be set by the user.
      */
-    protected static Model|string $query_model;
+    protected static Model|string $queryModel;
 
     /**
      * Clear all cached searches for the connected Model.
      */
     protected static function clearClassCache() : void
     {
-        Cache::tags(Str::snake(class_basename(self::$query_model)))->flush();
+        Cache::tags(Str::snake(class_basename(self::$queryModel)))->flush();
     }
 
     /**
@@ -43,7 +43,7 @@ trait ModelFinderShared
 
     protected static function getCacheHelper(ValueObject $valueObject) : CacheHelper
     {
-        return new CacheHelper($valueObject, self::$query_model);
+        return new CacheHelper($valueObject, self::$queryModel);
     }
 
     /**
@@ -52,9 +52,9 @@ trait ModelFinderShared
      */
     private static function searchInModel(ValueObject $value) : Collection|Model
     {
-        $query = self::$query_model::query();
+        $query = self::$queryModel::query();
 
-        foreach (self::$query_keys as $key) {
+        foreach (self::$queryKeys as $key) {
             $query->orWhere($key, 'ilike', $value->getValue());
         }
 
