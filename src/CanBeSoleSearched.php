@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace BrekiTomasson\LaravelModelFinder;
 
 use BrekiTomasson\LaravelModelFinder\DataObjects\ValueObject;

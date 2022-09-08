@@ -15,20 +15,13 @@ use Illuminate\Support\Str;
 
 trait ModelFinderShared
 {
-    /**
-     * @var array A list of the columns to base your search on. Should be set by the user.
-     */
+    /** @var array A list of the columns to base your search on. Should be set by the user. */
     protected static array $query_keys;
 
     /**
      * @var Model|string The fully qualified class name, including "::class", of the Model being searched. Should be set by the user.
      */
     protected static Model|string $query_model;
-
-    protected static function getCacheHelper(ValueObject $valueObject) : CacheHelper
-    {
-        return new CacheHelper($valueObject, self::$query_model);
-    }
 
     /**
      * Clear all cached searches for the connected Model.
@@ -46,6 +39,11 @@ trait ModelFinderShared
     protected static function clearModelFinderCache() : void
     {
         Cache::tags('laravel-model-finder')->flush();
+    }
+
+    protected static function getCacheHelper(ValueObject $valueObject) : CacheHelper
+    {
+        return new CacheHelper($valueObject, self::$query_model);
     }
 
     /**

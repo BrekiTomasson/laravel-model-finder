@@ -10,14 +10,10 @@ use Illuminate\Support\Str;
 
 class CacheHelper
 {
-    /**
-     * @var string The snake-case version of the class name, used to generate the cache key.
-     */
+    /** @var string the snake-case version of the class name, used to generate the cache key */
     private string $class;
 
-    /**
-     * @var string A lower-case, trimmed, snake-cased version of the search string, used to generate the cache key.
-     */
+    /** @var string a lower-case, trimmed, snake-cased version of the search string, used to generate the cache key */
     private string $search;
 
     /**
@@ -30,6 +26,11 @@ class CacheHelper
         $this->class = Str::snake(class_basename($class));
     }
 
+    public function exists() : bool
+    {
+        return Cache::tags($this->getCacheTags())->has($this->getCacheKey());
+    }
+
     public function get() : Model|null
     {
         return Cache::tags($this->getCacheTags())->get($this->getCacheKey());
@@ -40,15 +41,15 @@ class CacheHelper
         Cache::tags($this->getCacheTags())->remember(
             $this->getCacheKey(),
             $this->cache_duration,
-            fn () => $result
+            static fn () => $result,
         );
 
         return $result;
     }
 
-    public function exists() : bool
+    private function getCacheKey() : string
     {
-        return Cache::tags($this->getCacheTags())->has($this->getCacheKey());
+        return $this->search;
     }
 
     /**
@@ -62,10 +63,4 @@ class CacheHelper
     {
         return ['laravel-model-finder', $this->class];
     }
-
-    private function getCacheKey() : string
-    {
-        return $this->search;
-    }
-
 }
