@@ -127,8 +127,9 @@ Please read through Method 1 first to understand a little more about how this pa
 implementation better.
 
 This way of implementing the package does not require you to create an entirely new class. Instead, all you need to do is `use CanBeSoleSearched` inside of the 
-`Model` you wish to be searchable and define the required attribute, `public static array $queryKeys`. In this case, you do not need to define the 
-attribute `$queryModel`, as this will be inherently defined based on the Model that you're using the `CanBeSoleSearched` trait in.
+`Model` you wish to be searchable and define the required attributes, same as above. Unfortunately, you still need to define the `$queryModel` property as 
+there is no good way for a static method to automatically populate this field from within a Trait, although this is something that I'm trying to figure out 
+a good way to do for a future release. 
 
 After that is done, you should be able to call `Country::findSole('taiwan')`, for example, and it will scan the columns defined in `$queryKeys` and return 
 a single result, if available. You can, of course, define your own `findSole` method that overwrites the one defined in the trait, but this is usually not 

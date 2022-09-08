@@ -12,7 +12,6 @@ use Illuminate\Database\MultipleRecordsFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use function Symfony\Component\String\s;
 
 trait ModelFinderShared
 {
@@ -21,7 +20,7 @@ trait ModelFinderShared
      */
     protected static function clearClassCache() : void
     {
-        Cache::tags(Str::snake(class_basename(self::queryModel())))->flush();
+        Cache::tags(Str::snake(class_basename(self::$queryModel)))->flush();
     }
 
     /**
@@ -36,7 +35,7 @@ trait ModelFinderShared
 
     protected static function getCacheHelper(ValueObject $valueObject) : CacheHelper
     {
-        return new CacheHelper($valueObject, self::queryModel());
+        return new CacheHelper($valueObject, self::$queryModel);
     }
 
     /**
@@ -45,7 +44,7 @@ trait ModelFinderShared
      */
     private static function searchInModel(ValueObject $value) : Collection|Model
     {
-        $query = self::queryModel()::class::query();
+        $query = self::$queryModel::query();
 
         foreach (self::$queryKeys as $key) {
             $query->orWhere($key, 'ilike', $value->getValue());
@@ -54,12 +53,4 @@ trait ModelFinderShared
         return $query->sole();
     }
 
-    private static function queryModel() : Model|string
-    {
-        if (static::class instanceof Model) {
-            return static::class;
-        }
-
-        return self::$queryModel;
-    }
 }
