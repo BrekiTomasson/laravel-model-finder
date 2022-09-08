@@ -15,14 +15,6 @@ use Illuminate\Support\Str;
 
 trait ModelFinderShared
 {
-    /** @var array A list of the columns to base your search on. Should be set by the user. */
-    protected static array $queryKeys;
-
-    /**
-     * @var Model|string The fully qualified class name, including "::class", of the Model being searched. Should be set by the user.
-     */
-    protected static Model|string $queryModel;
-
     /**
      * Clear all cached searches for the connected Model.
      */

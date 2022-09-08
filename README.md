@@ -141,6 +141,17 @@ caches related to that particular class. Calling the static method `clearModelFi
 `CanBeSoleSearched` will clear all caches related to **all** models that are searched by this package. However, as the cache is never updated unless a 
 single model is found, calling these methods is usually not required, but they exist in case you have a need for them.
 
+## Advanced Usage
+
+Imagine you have a `Country` model that doesn't have all the extra fields in the examples above, but you still want to be able to find countries based on a 
+number of different criteria. What you could do is create a `CountryName` model containing just a (unique) `name` and a `country_id`, then set the 
+`CountryName` Model to `BelongTo` the `Country` Model.
+
+This will allow you to create a `CountryFinder` class that uses the `CountryName` Model and just replace the final line, `return $cache->put($result)` with 
+something more like `return $cache->put($result->country)`. This way, if `CountryName` contains entries for 'America', 'USA', 'US', 'United States of America', 
+'The States' and 'US of A', you will be able to `CountryFinder::find('usa')` and it will return the related `Country` despite everything working on the 
+`CountryName` Model under the hood.
+
 ## Potential Problems
 
 Due to the way this package works, it should work "out of the box" for about 99% of your use cases (but don't quote me on that). However, there are a couple 
