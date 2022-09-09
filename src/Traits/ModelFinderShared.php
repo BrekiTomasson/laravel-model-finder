@@ -52,5 +52,4 @@ trait ModelFinderShared
 
         return $query->sole();
     }
-
 }
