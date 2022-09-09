@@ -31,12 +31,12 @@ class CacheHelper
         return Cache::tags($this->getCacheTags())->has($this->getCacheKey());
     }
 
-    public function get() : Model|null
+    public function get()
     {
         return Cache::tags($this->getCacheTags())->get($this->getCacheKey());
     }
 
-    public function put(Model $result) : Model
+    public function put(Model $result)
     {
         Cache::tags($this->getCacheTags())->remember(
             $this->getCacheKey(),

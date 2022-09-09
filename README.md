@@ -3,13 +3,16 @@
 A simple trait that makes building your own custom Laravel Model Searches a lot easier and safer. It ensures that your search criteria match one, and only
 one, result in the table being searched, allowing you to comfortably type-hint your methods by ensuring that the result of a query will never be `null` or a
 `Collection`, but always an instance of the specific Model you're querying. It does this by searching for a row that **uniquely** contains the data you're 
-looking for.
+looking for in one of the named columns. That's the selling point of this package; it will only return a result if that result is the **only** result for 
+your query. 
 
-Since this package requires PHP `v8.0` or greater, I am taking advantage of the way modern PHP allows me to be strict with types, meaning every method in 
-this package has clearly defined types for the attributes it accepts and the types of data that it returns.
+This means that instead of writing `Car::where('license_plate', 'MTU 83779')->firstOrFail()` and then worrying about whether your `license_plate` column is 
+unique or not, you can write `CarFinder::find('MTU 83779')`, and it will return a result only if it is the only row in the entire table that has that 
+particular value. And since you can define multiple columns for it to search through, `CarFinder::find('1HGBH41JXMN109186')` might return a result if you 
+have a `vim_number` column in your `Car` model.
 
-> See `CHANGELOG.md` for more information about version compatibility in case you are running an older version of PHP and/or Laravel.
-> The most recently released version (`v1.0.0`) of this package is built for PHP `v8.0` or greater and Laravel `v9.0` or greater.
+To speed things up, the package also leverages Laravel's Cache implementation, storing all results in the cache for 24 hours, meaning only the first 
+`UserFinder::find('person@domain.com')` call of the day will be hitting your database, with the rest being served from cache.
 
 ## Installation
 
@@ -22,11 +25,12 @@ composer require brekitomasson/laravel-model-finder
 
 ## Usage
 
-There are two main ways to use this package; either by (1) building your own Finder-classes or by (2) powering up your models. I recommend the first method, as
-it allows for a cleaner separation of concerns and is more feature-complete, but I will describe both ways below and allow you to decide for yourself. For 
-both examples, I will be showing the functionality by using a hypothetical `Country` model, but the system works for absolutely any Laravel-powered model.
+This package is used by adding one of the two traits that it offers to a class. There are two traits because there are two main ways to use this package; 
+either by (1) building your own custom Finder-classes or by (2) adding unique search-functionality to your Models.
 
-For the sake of argument, assume an entry in the `Country` model looks like this:
+I recommend the first method, as it allows for a cleaner separation of concerns and is more feature-complete, but I will describe both ways below and allow 
+you to decide for yourself. For both examples, I will be showing the functionality by using a hypothetical `Country` model, but the system works for 
+absolutely any Laravel-powered model. For the sake of argument, assume an entry in the `Country` model looks like this:
 
 ```json
 {
@@ -39,7 +43,7 @@ For the sake of argument, assume an entry in the `Country` model looks like this
 }
 ```
 
-### Method 1: Building Your Own Finder-Classes
+### Method 1: Building Your Own Finder-Class
 
 Let's create a new `CountryFinder` in the `App\Tools` namespace. It doesn't need to extend or implement any other classes, but it needs to `use` the
 `CanFindModelEntries` trait. Depending on your IDE, this will then inform you that you have a method stub for the static method `find` that needs to be
@@ -48,8 +52,8 @@ implemented, so let's do that.
 Now, since PHP doesn't natively support abstract keywords in their Traits (Seriously, PHP; what's up with that?), we have to implement the next two things
 manually. They are the `protected static array $queryKeys` and the `protected static Model|string $queryModel`. You populate these with:
 
-- `$queryKeys`: An array containing the list of attributes to be searched, and
-- `$queryModel`: the FQN (including `::class`) of the Model being searched.
+- `protected static array $queryKeys`: An array containing the list of attributes to be searched, and
+- `protected static Model|string $queryModel`: the FQN (including `::class`) of the Model being searched.
  
 At this point, the file should look something like this:
 
@@ -67,7 +71,12 @@ class CountryFinder
 {
     use CanFindModelEntries;
     
-    public static array $queryKeys = ['name', 'short_name', 'alpha2', 'alpha3'];
+    protected static array $queryKeys = [
+        'alpha2',
+        'alpha3',
+        'name',
+        'short_name',
+    ];
 
     protected static Model|string $queryModel = \App\Models\World\Country::class;
 
@@ -80,38 +89,31 @@ class CountryFinder
 
 The next step is to implement the `find(mixed $value)` method. The way you implement the `find(mixed $value)` is fairly standardized, but has been left to
 the user so that any customization or tweaking can be done here. A fairly standard implementation - with inline comments for added clarification - will
-look something like this. Note that I've included a PHP DocBlock to assist my IDE, as PHP (still) does not allow generics, but I want my IDE to understand 
-that the return, while technically a `Model` is *actually* an instance of `Country`.
+look something like the code below, which you can copy/paste into your own implementation. Note that I've changed the return type of the `find()` method from 
+the default `Model` to `Country` here, so that my IDE will correctly understand which methods and attributes are available on the returned object rather 
+than suggesting the methods and attributes on the base `Model` class. 
 
 ```php
-/**
- * @return Model<Country>
- */
-public static function find(mixed $value) : Model
+public static function find(mixed $value) : Country
 {
     // First, we 'clean' the value by removing any trailing or leading spaces, squishing extra spaces down to
     // single spaces, casting the result to string, etc.
-    $value_object = new ValueObject($value);
+    $value_object = new \BrekiTomasson\LaravelModelFinder\DataObjects\ValueObject($value);
     
     // Then, we generate the Cache Helper using the Value Object we've just generated. This will allow us to query
-    // the cache for the search criteria you've entered. Under the hood, the CacheHelper uses the name of the model
-    // we defined in `$queryModel` to generate the cache tags, allowing us to avoid conflicts when searching for
-    // the same value in multiple models.
+    // the cache for the search criteria you've entered.
     $cache = self::getCacheHelper($value_object);
 
-    // If we've already got the results for this search in our cache, we can return it as is. Since the ValueObject that
-    // the CacheHelper was constructed using is case-insensitive, this means that a search for "America" will return a
-    // cached value if you previously got a search result for "america".
+    // If we've already got the results for this search in our cache, we can return it as is.
     if ($cache->exists()) {
         return $cache->get();
     }
 
     // Perform the search and store the result in $result. This will throw a ModelNotFoundException if no result is
-    // found or a MultipleRecordsFoundException if two or more results are found. If no exception is thrown, we can be
-    // certain that $result contains a single entry from your Model.
+    // found or a MultipleRecordsFoundException if two or more results are found.
     $result = self::searchInModel($value_object);
 
-    // Return the $result, ensuring we also store it in the cache for future use.
+    // Return $result, ensuring we also store it in the cache for future use.
     return $cache->put($result);
 }
 ```
@@ -153,13 +155,13 @@ number of different criteria. What you could do is create a `CountryName` model 
 
 This will allow you to create a `CountryFinder` class that uses the `CountryName` Model and just replace the final line, `return $cache->put($result)` with 
 something more like `return $cache->put($result->country)`. This way, if `CountryName` contains entries for 'America', 'USA', 'US', 'United States of America', 
-'The States' and 'US of A', you will be able to `CountryFinder::find('usa')` and it will return the related `Country` despite everything working on the 
+'The States' and 'US of A', you will be able to `CountryFinder::find('usa')` and it will return the related `Country` Model despite everything operating on the 
 `CountryName` Model under the hood.
 
 ## Potential Problems
 
 Due to the way this package works, it should work "out of the box" for about 99% of your use cases (but don't quote me on that). However, there are a couple 
-of scenarios where the package will not work as intended. If you're having any problems with the package, please check `TROUBLESHOOTING.md` before opening 
+of scenarios where the package may not work as intended. If you're having any problems with the package, please check `TROUBLESHOOTING.md` before opening 
 an issue, as it is quite likely that your question is answered there.
 
 ## Future Development / Backlog
@@ -176,6 +178,7 @@ Here are a number of features/functionality that I want to implement in this pac
   *entire* cache for any given model just because one row has been added or removed. This will have to be explored.
 - Explore compatibility with Laravel `v8.x` - am I doing anything in this package that is exclusive to `v9.x`, or can I add support for `v8.x` without
   rewriting anything?
+- Reduce the reliance on `self::` calls and static properties by implementing a singleton object behind the scenes?
 - Write tests that make sense for this package.
 - Test this package with other database providers and "pseudo-databases" like `Sushi` to ensure it works as intended.
 
