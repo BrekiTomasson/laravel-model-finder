@@ -10,6 +10,10 @@ This changelog will keep track of any significant changes to the package. Versio
 - Patch versions (The "Z" in `vX.Y.Z`) will be released when the underlying code has gone through a minor change that does not affect intended functionality or 
   introduce any new features. This includes bugfixes, fixing spelling mistakes, updating documentation, etc.
 
+## `v1.0.1` Bugfix, 2022-09-10
+
+- `ModelFinderShared::searchInModel()` should only return `Model`, not `Collection|Model`.
+
 ## `v1.0.0` Initial Release, 2022-09-09
 
 Nothing special to report here, as this is the initial public release of this package. Future changes will be documented in this file.
