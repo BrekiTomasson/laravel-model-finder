@@ -42,7 +42,7 @@ trait ModelFinderShared
      * @throws ModelNotFoundException<Model>
      * @throws MultipleRecordsFoundException
      */
-    private static function searchInModel(ValueObject $value) : Collection|Model
+    private static function searchInModel(ValueObject $value) : Model
     {
         $query = self::$queryModel::query();
 
