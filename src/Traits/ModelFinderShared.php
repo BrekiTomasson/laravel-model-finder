@@ -17,7 +17,7 @@ trait ModelFinderShared
     /**
      * Clear all cached searches for the connected Model.
      */
-    protected static function clearClassCache() : void
+    public static function clearClassCache() : void
     {
         Cache::tags(Str::snake(class_basename(self::$queryModel)))->flush();
     }
@@ -27,7 +27,7 @@ trait ModelFinderShared
      *
      * @todo Read this field's name from a configuration file rather than hard-coding it here.
      */
-    protected static function clearModelFinderCache() : void
+    public static function clearModelFinderCache() : void
     {
         Cache::tags('laravel-model-finder')->flush();
     }
