@@ -10,6 +10,12 @@ This changelog will keep track of any significant changes to the package. Versio
 - Patch versions (The "Z" in `vX.Y.Z`) will be released when the underlying code has gone through a minor change that does not affect intended functionality or 
   introduce any new features. This includes bugfixes, fixing spelling mistakes, updating documentation, etc.
 
+## `v1.1.0` Minor feature addition, 2022-10-08
+
+- Added `forget()` method to `CacheHelper` class.
+- Standardized line length in `README.md`.
+- Cleaned up some DocBlocks.
+
 ## `v1.0.2` Bugfix, 2022-09-17
 
 - Made `clearClassCache()` and `clearModelFinderCache()` public, not protected.
