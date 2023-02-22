@@ -13,6 +13,10 @@ to the following schema:
   does not affect intended functionality or introduce any new features. This includes bugfixes, fixing spelling
   mistakes, updating documentation, etc.
 
+## `v1.2.0` Dependency Update, 2022-02-22
+
+- Added support for Laravel v10.
+
 ## `v1.1.0` Minor feature addition, 2022-10-08
 
 - Added `forget()` method to `CacheHelper` class.

@@ -17,8 +17,8 @@
   "minimum-stability": "beta",
   "require": {
     "php": "^8.0",
-    "illuminate/support": "^9.28",
-    "illuminate/database": "^9.28"
+    "illuminate/support": "^9.0|^10.0",
+    "illuminate/database": "^9.0|^10.0"
   },
   "require-dev": {
     "pestphp/pest": "^1.22",
