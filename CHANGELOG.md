@@ -13,6 +13,14 @@ to the following schema:
   does not affect intended functionality or introduce any new features. This includes bugfixes, fixing spelling
   mistakes, updating documentation, etc.
 
+## `v1.4.0` Dependency Update, 2025-03-19
+
+- Added support for Laravel v12.
+
+- ## `v1.3.0` Dependency Update, 2025-01-04
+
+- Added support for Laravel v11.
+
 ## `v1.2.0` Dependency Update, 2022-02-22
 
 - Added support for Laravel v10.
